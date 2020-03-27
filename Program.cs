@@ -2,7 +2,9 @@
 using System.Threading.Tasks;
 using Simple.OData.Client;
 using System.Net;
-
+using Microsoft.Data.SqlClient;
+using System.Data
+;
 namespace TestConsumeAPIBC
 {
     class Program
@@ -25,12 +27,30 @@ namespace TestConsumeAPIBC
             
             var packages = await client
                 .FindEntriesAsync("Company('CRONUS AU')/MasterItem");
+
+            string connectionString = @"server=ARIES-T450;Database=Testing;Trusted_Connection=True;";
             
             Console.WriteLine("No - Description - BaseUnitofMeasure");
             foreach (var package in packages)
             {
                 Console.WriteLine($"{package["No"]} - {package["Description"]} - {package["BaseUnitofMeasure"]}" );
+                Console.WriteLine("Inserting into database" );
+
+                var sqlInsert = $"insert into dbo.ItemIwpi (No, Description, BaseUnitofMeasure) values ('{package["No"]}', '{package["Description"]}', '{package["BaseUnitofMeasure"]}')";
+                InsertData(connectionString, sqlInsert);
             }
         }
+        public static void InsertData(string connectionString, string sqlInsert)  
+        {    
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                SqlCommand cmd = new SqlCommand(sqlInsert, con);
+                cmd.CommandType = CommandType.Text;  
+    
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+        }  
     }
 }
